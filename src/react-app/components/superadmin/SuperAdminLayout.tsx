@@ -35,7 +35,6 @@ const operationsNavItems = [
     { id: "institutes", label: "Institutes & Centers", icon: Building2, href: "/superadmin/institutes", badge: true },
     { id: "exams", label: "Exams", icon: FileText, href: "/superadmin/exams" },
     { id: "batches", label: "Batches", icon: Layers, href: "/superadmin/batches" },
-    { id: "timetable", label: "Timetable", icon: Calendar, href: "/superadmin/timetable" },
     { id: "billing", label: "Billing & Finance", icon: IndianRupee, href: "/superadmin/billing" },
     { id: "activity", label: "Activity & Logs", icon: Activity, href: "/superadmin/activity-logs" },
 ];
@@ -416,6 +415,19 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                         </div>
 
                         <div className="flex items-center gap-3 pl-4">
+                            <Link
+                                to="/superadmin/timetable"
+                                title="Timetable"
+                                className={`p-2 rounded-lg transition-colors relative group ${location.pathname === '/superadmin/timetable'
+                                        ? 'bg-violet-100 text-violet-600'
+                                        : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                                    }`}
+                            >
+                                <Calendar className="w-5 h-5" />
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[10px] font-medium text-white bg-slate-800 rounded-md opacity-0 transition-opacity whitespace-nowrap pointer-events-none">
+                                    Timetable
+                                </span>
+                            </Link>
                             <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors relative">
                                 <Bell className="w-5 h-5" />
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
