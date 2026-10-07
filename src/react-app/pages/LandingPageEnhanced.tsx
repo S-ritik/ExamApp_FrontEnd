@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import Hero from '../components/landing/Hero';
@@ -16,7 +16,7 @@ import '../styles/landing-mobile.css';
 export default function LandingPageEnhanced() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const scrollToSection = (id) => {
+  const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
       const offset = 72; // nav height
@@ -25,6 +25,15 @@ export default function LandingPageEnhanced() {
     }
     setMobileMenuOpen(false);
   };
+
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.replace('#', '');
+      setTimeout(() => {
+        scrollToSection(id);
+      }, 150);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
@@ -54,6 +63,7 @@ export default function LandingPageEnhanced() {
               <button onClick={() => scrollToSection('process')} className="hover:text-blue-600 transition-colors cursor-pointer bg-transparent border-none p-0">Process</button>
               <button onClick={() => scrollToSection('security')} className="hover:text-blue-600 transition-colors cursor-pointer bg-transparent border-none p-0">Security</button>
               <button onClick={() => scrollToSection('platform')} className="hover:text-blue-600 transition-colors cursor-pointer bg-transparent border-none p-0">Platform</button>
+              <Link to="/contributors" className="hover:text-blue-600 transition-colors">Contributors</Link>
             </div>
           </div>
 
@@ -88,7 +98,8 @@ export default function LandingPageEnhanced() {
               <button onClick={() => scrollToSection('features')} className="block w-full text-left py-2 border-b border-gray-50 bg-transparent border-x-0 border-t-0 cursor-pointer hover:text-blue-600 transition-colors">Features</button>
               <button onClick={() => scrollToSection('process')} className="block w-full text-left py-2 border-b border-gray-50 bg-transparent border-x-0 border-t-0 cursor-pointer hover:text-blue-600 transition-colors">Process</button>
               <button onClick={() => scrollToSection('security')} className="block w-full text-left py-2 border-b border-gray-50 bg-transparent border-x-0 border-t-0 cursor-pointer hover:text-blue-600 transition-colors">Security</button>
-              <button onClick={() => scrollToSection('platform')} className="block w-full text-left py-2 bg-transparent border-none cursor-pointer hover:text-blue-600 transition-colors">Platform</button>
+              <button onClick={() => scrollToSection('platform')} className="block w-full text-left py-2 border-b border-gray-50 bg-transparent border-x-0 border-t-0 cursor-pointer hover:text-blue-600 transition-colors">Platform</button>
+              <Link to="/contributors" onClick={() => setMobileMenuOpen(false)} className="block w-full text-left py-2 bg-transparent border-none cursor-pointer hover:text-blue-600 transition-colors">Contributors</Link>
             </div>
             <div className="pt-4 flex flex-col gap-3">
               <Link 
@@ -210,6 +221,7 @@ export default function LandingPageEnhanced() {
             <h4 className="font-bold text-gray-900 mb-6 text-sm">Company</h4>
             <ul className="space-y-3 text-sm text-gray-500 font-medium">
               <li><a href="#" className="hover:text-blue-600 transition-colors">About</a></li>
+              <li><Link to="/contributors" className="hover:text-blue-600 transition-colors">Contributors</Link></li>
               <li><a href="#" className="hover:text-blue-600 transition-colors">Blog</a></li>
               <li><a href="#" className="hover:text-blue-600 transition-colors">Careers</a></li>
               <li><a href="#" className="hover:text-blue-600 transition-colors">Contact</a></li>

@@ -60,6 +60,7 @@ import TeacherAnalytics from "@/react-app/pages/TeacherAnalytics";
 import TeacherEvaluationDashboard from "@/react-app/pages/TeacherEvaluationDashboard";
 import InstituteProfile from "@/react-app/pages/InstituteProfile";
 import LandingPageEnhanced from "@/react-app/pages/LandingPageEnhanced";
+import Contributors from "@/react-app/pages/Contributors";
 import ProctoringDiagnostics from "@/react-app/pages/ProctoringDiagnostics";
 import PlatformDashboard from './pages/PlatformDashboard';
 import PlatformInstitutes from './pages/PlatformInstitutes';
@@ -870,6 +871,9 @@ function AppRoutes() {
           <InstituteProfile />
         </ProtectedRoute>
       } />
+
+      {/* Contributors Page */}
+      <Route path="/contributors" element={<Contributors />} />
 
       {/* Landing Page */}
       <Route path="/" element={
