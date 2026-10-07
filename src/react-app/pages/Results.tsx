@@ -17,10 +17,13 @@ import {
   FileText,
   X,
   Download,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { api } from '../hooks/useApi';
 import { SkeletonTable, SkeletonStatsCard, SkeletonText } from '../components/SkeletonLoader';
+import { Pagination } from '../components/common/Pagination';
 
 interface Exam {
   id: number;
@@ -81,11 +84,17 @@ export default function Results() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize] = useState(20);
 
   useEffect(() => {
     loadExams();
-    loadResults();
   }, []);
+
+  useEffect(() => {
+    loadResults(false, currentPage);
+  }, [currentPage]);
 
   const loadExams = async () => {
     try {
@@ -129,7 +138,7 @@ export default function Results() {
     return params;
   };
 
-  const loadResults = async (showSpinner = true) => {
+  const loadResults = async (showSpinner = true, page = 1) => {
     try {
       if (showSpinner) {
         setApplying(true);
@@ -138,7 +147,11 @@ export default function Results() {
       setError(null);
       setExportError(null);
 
-      const params = buildFilterParams();
+      const params = {
+        ...buildFilterParams(),
+        page: page,
+        page_size: pageSize
+      };
 
       console.log('Fetching results with params:', params);
       const response = await api.get('/exams/attempts/', { params });
@@ -146,17 +159,23 @@ export default function Results() {
 
       // Handle different response structures
       let attemptsData = response.data;
+      let total = 0;
+
       if (attemptsData && typeof attemptsData === 'object') {
         if (Array.isArray(attemptsData.results)) {
+          total = attemptsData.count || attemptsData.results.length;
           attemptsData = attemptsData.results;
-        } else if (!Array.isArray(attemptsData)) {
+        } else if (Array.isArray(attemptsData)) {
+          total = attemptsData.length;
+        } else {
           attemptsData = [];
         }
-      } else if (!Array.isArray(attemptsData)) {
+      } else {
         attemptsData = [];
       }
 
       setAttempts(attemptsData);
+      setTotalCount(total);
     } catch (error: any) {
       console.error('Error loading results:', error);
       setError(error.message || 'Failed to load results');
@@ -167,7 +186,8 @@ export default function Results() {
   };
 
   const handleApplyFilters = () => {
-    loadResults(true);
+    setCurrentPage(1);
+    loadResults(true, 1);
   };
 
   const handleClearFilters = () => {
@@ -178,7 +198,8 @@ export default function Results() {
     setEndDate('');
     // Reload with cleared filters
     setTimeout(() => {
-      loadResults(true);
+      setCurrentPage(1);
+      loadResults(true, 1);
     }, 100);
   };
 
@@ -230,6 +251,25 @@ export default function Results() {
     } else {
       return `${secs}s`;
     }
+  };
+
+  const getAttemptTotalMarks = (attempt: ExamAttempt) => {
+    const score = Number(attempt.score);
+    const pct = Number(attempt.percentage);
+    if (score > 0 && pct > 0) {
+      const computed = Math.round((score * 100) / pct);
+      if (computed > 0) return computed;
+    }
+    return attempt.exam.total_marks;
+  };
+
+  const getAttemptTotalQuestions = (attempt: ExamAttempt) => {
+    const attemptMarks = getAttemptTotalMarks(attempt);
+    if (attemptMarks > 0 && attempt.exam.total_marks > 0 && attemptMarks !== attempt.exam.total_marks) {
+      const computed = Math.round(attempt.exam.total_questions * (attemptMarks / attempt.exam.total_marks));
+      if (computed > 0) return computed;
+    }
+    return attempt.exam.total_questions;
   };
 
   const getStatusColor = (status: string) => {
@@ -497,6 +537,7 @@ export default function Results() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  onClick={(e) => (e.target as any).showPicker?.()}
                   className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
               </div>
@@ -511,6 +552,7 @@ export default function Results() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  onClick={(e) => (e.target as any).showPicker?.()}
                   className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
               </div>
@@ -544,7 +586,7 @@ export default function Results() {
           <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <h3 className="text-lg font-semibold text-slate-900">
-                Results ({attempts.length})
+                Results ({totalCount})
               </h3>
               <div className="flex flex-col items-start gap-1 md:items-end">
                 <div className="flex items-center gap-2">
@@ -661,7 +703,7 @@ export default function Results() {
                             {attempt.exam_title}
                           </div>
                           <div className="text-xs text-slate-500">
-                            {attempt.exam.total_questions} questions • {attempt.exam.total_marks} marks
+                            {getAttemptTotalQuestions(attempt)} questions • {getAttemptTotalMarks(attempt)} marks
                           </div>
                         </div>
                       </td>
@@ -676,7 +718,7 @@ export default function Results() {
                           {attempt.percentage ? `${parseFloat(attempt.percentage).toFixed(1)}%` : '-'}
                         </div>
                         <div className="text-xs text-slate-500">
-                          {attempt.score || 'N/A'}
+                          {attempt.score ? `${attempt.score} / ${getAttemptTotalMarks(attempt)}` : 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
@@ -725,6 +767,14 @@ export default function Results() {
             </div>
           )}
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          loading={loading}
+        />
       </div>
     </div>
   );

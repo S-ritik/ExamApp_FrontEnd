@@ -132,9 +132,9 @@ export default function PatternCreation() {
   const [pattern, setPattern] = useState<ExamPattern>({
     name: '',
     description: '',
-    total_questions: '',
-    total_marks: '',
-    total_duration: '',
+    total_questions: 0,
+    total_marks: 0,
+    total_duration: 0,
     is_active: true,
     sections: [],
     exam_mode: 'online',
@@ -156,6 +156,18 @@ export default function PatternCreation() {
   const [showSubjectSuggestions, setShowSubjectSuggestions] = useState(false);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [recentlyAddedSubjects, setRecentlyAddedSubjects] = useState<Set<string>>(new Set());
+
+  // Raw (string) display values for end_question per section — lets users backspace freely
+  // without the auto-alignment logic overwriting a mid-edit empty string.
+  const [rawEndQuestions, setRawEndQuestions] = useState<Record<number, string>>({});
+
+  // Helper: get display value for end_question
+  const getEndQuestionDisplay = (globalIndex: number, section: PatternSection) => {
+    if (Object.prototype.hasOwnProperty.call(rawEndQuestions, globalIndex)) {
+      return rawEndQuestions[globalIndex];
+    }
+    return String(section.end_question ?? '');
+  };
 
   const isEditing = Boolean(id);
 
@@ -198,6 +210,7 @@ export default function PatternCreation() {
   };
 
   const handleInputChange = (field: keyof ExamPattern, value: any) => {
+    console.log(`Input change: ${String(field)} =`, value);
     setPattern(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -207,6 +220,22 @@ export default function PatternCreation() {
     if (field === 'total_marks' && marksValidationError) {
       setMarksValidationError('');
     }
+  };
+
+  // derive satisfaction state
+  const isFormSatisfied = () => {
+    const hasBasicInfo = pattern.name.trim() !== '' &&
+      pattern.description.trim() !== '' &&
+      Number(pattern.total_questions) > 0 &&
+      Number(pattern.total_marks) > 0 &&
+      Number(pattern.total_duration) > 0;
+
+    const hasSections = pattern.sections.length > 0;
+    const hasNoSectionErrors = Object.keys(sectionErrors).every(idx =>
+      Object.values(sectionErrors[Number(idx)]).every(err => !err)
+    );
+
+    return hasBasicInfo && hasSections && hasNoSectionErrors;
   };
 
   // Auto-calculate totals from sections
@@ -463,10 +492,39 @@ export default function PatternCreation() {
       marking_scheme: defaultMarkingScheme,
     };
 
-    setPattern(prev => ({
-      ...prev,
-      sections: [...prev.sections, newSection],
-    }));
+    console.log('Adding new section for subject:', subjectName, newSection);
+    setPattern(prev => {
+      const newSections = [...prev.sections, newSection];
+
+      // Align sections for this subject
+      const subjectSectionsSorted = newSections
+        .map((s, i) => ({ ...s, originalIndex: i }))
+        .filter(s => s.subject === subjectName)
+        .sort((a, b) => a.order - b.order);
+
+      let currentQ = 1;
+      subjectSectionsSorted.forEach((s) => {
+        const startQ = typeof s.start_question === 'number' ? s.start_question : (parseInt(String(s.start_question)) || 1);
+        const endQ = typeof s.end_question === 'number' ? s.end_question : (parseInt(String(s.end_question)) || 1);
+        const length = Math.max(0, endQ - startQ + 1);
+
+        const newStart = currentQ;
+        const newEnd = currentQ + Math.max(length, 1) - 1;
+
+        newSections[s.originalIndex] = {
+          ...newSections[s.originalIndex],
+          start_question: newStart,
+          end_question: newEnd,
+          min_questions_to_attempt: Math.max(length, 1)
+        };
+        currentQ = newEnd + 1;
+      });
+
+      return {
+        ...prev,
+        sections: newSections
+      };
+    });
     setNextSectionOrder(prev => prev + 1);
 
     // Scroll to the subject group and highlight it
@@ -534,31 +592,60 @@ export default function PatternCreation() {
 
   const updateSection = (index: number, field: keyof PatternSection, value: any) => {
     setPattern(prev => {
-      const updatedSections = [...prev.sections];
-      let currentSection = { ...updatedSections[index], [field]: value };
+      // 1. Update the target section
+      const updatedSections = prev.sections.map((section, i) => {
+        if (i !== index) return section;
 
-      if (field === 'start_question' || field === 'end_question') {
-        const startRaw = currentSection.start_question;
-        const endRaw = currentSection.end_question;
-        const startQ = typeof startRaw === 'number' ? startRaw : parseInt(String(startRaw), 10);
-        const endQ = typeof endRaw === 'number' ? endRaw : parseInt(String(endRaw), 10);
+        let updatedSection = { ...section, [field]: value };
 
-        if (Number.isFinite(startQ) && Number.isFinite(endQ) && endQ >= startQ) {
-          currentSection = {
-            ...currentSection,
-            min_questions_to_attempt: Math.max(endQ - startQ + 1, 1),
-          };
+        // Handle numeric inputs
+        if (field === 'start_question' || field === 'end_question' || field === 'min_questions_to_attempt') {
+          const numValue = parseInt(String(value), 10);
+          updatedSection = { ...updatedSection, [field]: isNaN(numValue) ? '' : numValue };
         }
-      }
 
-      updatedSections[index] = currentSection;
+        return updatedSection;
+      });
 
-      // REMOVED: Auto-update subsequent sections' start_question when end_question changes
-      // This was causing automatic calculation - users should manually set end_question values
+      // 2. Automatically align all sections within the SAME SUBJECT
+      const targetSubject = updatedSections[index].subject;
+
+      // Filter and sort sections for this subject by order
+      const subjectSectionsSorted = updatedSections
+        .map((s, i) => ({ ...s, originalIndex: i }))
+        .filter(s => s.subject === targetSubject)
+        .sort((a, b) => a.order - b.order);
+
+      let currentQ = 1;
+      const finalSections = [...updatedSections];
+
+      subjectSectionsSorted.forEach((s) => {
+        const startQ = typeof s.start_question === 'number' ? s.start_question : (parseInt(String(s.start_question)) || 1);
+        const endQ = typeof s.end_question === 'number' ? s.end_question : (parseInt(String(s.end_question)) || 1);
+        const length = Math.max(1, endQ - startQ + 1);
+
+        const newStart = currentQ;
+        const newEnd = currentQ + length - 1;
+
+        // Preserve min_questions if it fits in the new range, otherwise cap it
+        let newMin = s.min_questions_to_attempt;
+        if (typeof newMin !== 'number') newMin = parseInt(String(newMin)) || length;
+        if (newMin > length) newMin = length;
+        if (newMin < 0) newMin = 0;
+
+        finalSections[s.originalIndex] = {
+          ...finalSections[s.originalIndex],
+          start_question: newStart,
+          end_question: newEnd,
+          min_questions_to_attempt: newMin
+        };
+
+        currentQ = newEnd + 1;
+      });
 
       return {
         ...prev,
-        sections: updatedSections
+        sections: finalSections
       };
     });
 
@@ -586,26 +673,36 @@ export default function PatternCreation() {
 
   const removeSection = (index: number) => {
     setPattern(prev => {
-      const updatedSections = prev.sections.filter((_, i) => i !== index);
+      const subjectToRemoveFrom = prev.sections[index].subject;
+      const newSections = prev.sections.filter((_, i) => i !== index);
 
-      // Recalculate question numbers for remaining sections
-      let currentQuestion = 1;
-      const recalculatedSections = updatedSections.map(section => {
-        const startQ = typeof section.start_question === 'string' ? parseInt(section.start_question) || 0 : section.start_question;
-        const endQ = typeof section.end_question === 'string' ? parseInt(section.end_question) || 0 : section.end_question;
-        const questionsInSection = endQ - startQ + 1;
-        const newSection = {
-          ...section,
-          start_question: currentQuestion,
-          end_question: currentQuestion + questionsInSection - 1
+      // Re-align remaining sections for that subject
+      const subjectSectionsSorted = newSections
+        .map((s, i) => ({ ...s, originalIndex: i }))
+        .filter(s => s.subject === subjectToRemoveFrom)
+        .sort((a, b) => a.order - b.order);
+
+      let currentQ = 1;
+      subjectSectionsSorted.forEach((s) => {
+        const startQ = typeof s.start_question === 'number' ? s.start_question : (parseInt(String(s.start_question)) || 1);
+        const endQ = typeof s.end_question === 'number' ? s.end_question : (parseInt(String(s.end_question)) || 1);
+        const length = Math.max(0, endQ - startQ + 1);
+
+        const newStart = currentQ;
+        const newEnd = currentQ + Math.max(length, 1) - 1;
+
+        newSections[s.originalIndex] = {
+          ...newSections[s.originalIndex],
+          start_question: newStart,
+          end_question: newEnd,
+          min_questions_to_attempt: Math.max(length, 1)
         };
-        currentQuestion += questionsInSection;
-        return newSection;
+        currentQ = newEnd + 1;
       });
 
       return {
         ...prev,
-        sections: recalculatedSections
+        sections: newSections
       };
     });
 
@@ -1503,20 +1600,46 @@ export default function PatternCreation() {
                               <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">End Question</label>
                                 <input
-                                  type="number"
-                                  value={section.end_question}
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={getEndQuestionDisplay(globalIndex, section)}
                                   onChange={(e) => {
-                                    const inputValue = e.target.value;
-                                    if (inputValue === '') {
-                                      updateSection(globalIndex, 'end_question', '');
-                                    } else {
-                                      const numValue = parseInt(inputValue, 10);
-                                      if (!isNaN(numValue) && numValue > 0) {
-                                        updateSection(globalIndex, 'end_question', numValue);
+                                    const raw = e.target.value;
+                                    // Allow empty string or digits only
+                                    if (raw === '' || /^\d+$/.test(raw)) {
+                                      setRawEndQuestions(prev => ({ ...prev, [globalIndex]: raw }));
+                                      // Validate in real time (show error while typing)
+                                      if (raw !== '') {
+                                        const numValue = parseInt(raw, 10);
+                                        if (!isNaN(numValue) && numValue > 0) {
+                                          validateSectionField(globalIndex, 'end_question', numValue);
+                                        }
                                       }
                                     }
                                   }}
-                                  className={`w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${sectionErrors[globalIndex]?.end_question ? 'border-red-300' : 'border-slate-300'
+                                  onBlur={(e) => {
+                                    const raw = rawEndQuestions[globalIndex] ?? String(section.end_question ?? '');
+                                    const numValue = parseInt(raw, 10);
+                                    // Only commit if valid; otherwise restore last good value
+                                    if (!isNaN(numValue) && numValue > 0) {
+                                      updateSection(globalIndex, 'end_question', numValue);
+                                    }
+                                    // Always clear the raw override so display reverts to state
+                                    setRawEndQuestions(prev => {
+                                      const next = { ...prev };
+                                      delete next[globalIndex];
+                                      return next;
+                                    });
+                                  }}
+                                  onFocus={() => {
+                                    // Seed raw with current value so user can see and edit it
+                                    setRawEndQuestions(prev => ({
+                                      ...prev,
+                                      [globalIndex]: String(section.end_question ?? '')
+                                    }));
+                                  }}
+                                  className={`w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-colors ${sectionErrors[globalIndex]?.end_question ? 'border-red-300' : 'border-slate-300'
                                     }`}
                                   min="1"
                                 />
@@ -1635,21 +1758,21 @@ export default function PatternCreation() {
                     <BookOpen className="w-3 h-3 text-slate-400" />
                     <span className="text-xs text-slate-600">Total Questions</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-900">{pattern.total_questions || 'Not set'}</span>
+                  <span className="text-xs font-medium text-slate-900">{pattern.total_questions !== '' ? pattern.total_questions : 'Not set'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="w-3 h-3 text-slate-400" />
                     <span className="text-xs text-slate-600">Total Marks</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-900">{pattern.total_marks || 'Not set'}</span>
+                  <span className="text-xs font-medium text-slate-900">{pattern.total_marks !== '' ? pattern.total_marks : 'Not set'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="w-3 h-3 text-slate-400" />
                     <span className="text-xs text-slate-600">Duration</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-900">{pattern.total_duration ? `${pattern.total_duration} min` : 'Not set'}</span>
+                  <span className="text-xs font-medium text-slate-900">{pattern.total_duration !== '' ? `${pattern.total_duration} min` : 'Not set'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1805,7 +1928,7 @@ export default function PatternCreation() {
             <div className="flex-grow md:flex-grow-0 flex items-center gap-3">
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || !isFormSatisfied()}
                 className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg min-w-[140px] sm:min-w-[160px]"
               >
                 <Save className="w-4 h-4" />
@@ -1813,7 +1936,7 @@ export default function PatternCreation() {
               </button>
               <button
                 onClick={handlePublish}
-                disabled={saving}
+                disabled={saving || !isFormSatisfied()}
                 className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg min-w-[140px] sm:min-w-[180px]"
               >
                 <CheckCircle className="w-4 h-4" />
