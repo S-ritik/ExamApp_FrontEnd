@@ -48,3 +48,21 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+
+# Next.js build output
+.next/
+out/
+
+# Environment files
+.env.*
+!.env.example
+
+# Package manager
+.pnpm-store/
+
+
+.next/
+out/
+
+
