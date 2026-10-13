@@ -855,6 +855,19 @@ const UsersContent = () => {
                     {roleCounts.super_admin || 0}
                   </span>
                 </button>
+                <button
+                  onClick={() => setActiveTab("manager")}
+                  className={`${activeTab === "manager"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    } whitespace-nowrap border-b-2 pb-4 px-1 text-sm font-medium`}
+                >
+                  Managers
+                  <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${activeTab === "manager" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                    }`}>
+                    {roleCounts.manager || 0}
+                  </span>
+                </button>
                 {!isPlatformOwner && (
                   <button
                     onClick={() => setActiveTab("admin")}
@@ -1477,6 +1490,7 @@ const UsersContent = () => {
                       <option value="teacher">Teacher</option>
                       <option value="admin">Admin</option>
                       <option value="staff">Staff</option>
+                      <option value="manager">Manager</option>
                       <option value="super_admin">Super Admin</option>
                     </select>
                   </div>
@@ -1652,6 +1666,7 @@ const UsersContent = () => {
                       <option value="teacher">Teacher</option>
                       <option value="admin">Admin</option>
                       <option value="staff">Staff</option>
+                      <option value="manager">Manager</option>
                       <option value="super_admin">Super Admin</option>
                     </select>
                   </div>

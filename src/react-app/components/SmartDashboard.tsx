@@ -10,6 +10,8 @@ export default function SmartDashboard() {
 
   if (normalizedRole === 'platform_owner') {
     return <Navigate to="/platform-owner/dashboard" replace />;
+  } else if (normalizedRole === 'manager') {
+    return <Navigate to="/manager" replace />;
   } else if (normalizedRole === 'super_admin' || normalizedRole === 'superadmin') {
     return <Navigate to="/superadmin/dashboard" replace />;
   } else if (normalizedRole === 'student') {

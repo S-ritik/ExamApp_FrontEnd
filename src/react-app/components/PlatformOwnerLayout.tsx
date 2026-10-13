@@ -30,9 +30,19 @@ const navItems = [
 export default function PlatformOwnerLayout({ children }: PlatformOwnerLayoutProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const { user, logout } = useAuthContext();
+    const { user, isAuthenticated, loading: authLoading, logout } = useAuthContext();
     const navigate = useNavigate();
     const location = useLocation();
+
+    React.useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            navigate("/login", { replace: true });
+        }
+        const userRole = (user?.role as string)?.toLowerCase();
+        if (!authLoading && userRole !== "platform_owner") {
+            navigate("/dashboard", { replace: true });
+        }
+    }, [user, isAuthenticated, authLoading, navigate]);
 
     const handleLogout = async () => {
         await logout();

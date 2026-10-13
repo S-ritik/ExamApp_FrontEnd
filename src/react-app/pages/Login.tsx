@@ -126,6 +126,8 @@ export default function Login() {
     }
 
     switch (normalizedRole) {
+      case 'manager':
+        return '/manager';
       case 'super_admin':
       case 'superadmin':
         return '/superadmin/dashboard';

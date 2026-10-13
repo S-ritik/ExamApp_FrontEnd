@@ -108,6 +108,12 @@ export default function TimetableLogin() {
     const role = typeof user === 'string' ? user : user?.role;
 
     switch (role) {
+      case 'platform_owner':
+      case 'PLATFORM_OWNER':
+        return '/platform-owner/dashboard';
+      case 'manager':
+      case 'MANAGER':
+        return '/manager';
       case 'super_admin':
       case 'SUPER_ADMIN':
         return '/superadmin/dashboard';

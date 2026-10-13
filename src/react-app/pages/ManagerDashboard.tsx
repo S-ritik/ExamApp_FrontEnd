@@ -100,12 +100,16 @@ export default function ManagerDashboard() {
 
   // Check authentication - only manager and platform_owner allowed
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (authLoading) return;
+    if (!isAuthenticated) {
       navigate("/login", { replace: true });
+      return;
     }
-    const userRole = (user?.role as string)?.toLowerCase();
-    if (!authLoading && userRole !== "manager" && userRole !== "platform_owner") {
-      navigate("/dashboard", { replace: true });
+    if (user) {
+      const userRole = (user.role as string)?.toLowerCase();
+      if (userRole !== "manager" && userRole !== "platform_owner") {
+        navigate("/dashboard", { replace: true });
+      }
     }
   }, [user, isAuthenticated, authLoading, navigate]);
 
