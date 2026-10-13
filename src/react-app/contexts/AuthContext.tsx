@@ -229,6 +229,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      sessionStorage.setItem('is_logging_out', 'true');
       await api.post('/auth/logout/');
     } catch (logoutError) {
       console.log('Backend logout failed, continuing with frontend cleanup', logoutError);

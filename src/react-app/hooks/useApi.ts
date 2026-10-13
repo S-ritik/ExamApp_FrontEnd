@@ -182,11 +182,18 @@ api.interceptors.response.use(
       error.response?.data?.code === 'device_session_invalid' ||
       error.response?.data?.error_code === 'DEVICE_SESSION_INVALID';
     if (error.response?.status === 401 && deviceSessionInvalid) {
+      const isLoggingOut = sessionStorage.getItem('is_logging_out') === 'true';
       // Device session was invalidated (user logged in on another device)
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user_data');
       localStorage.removeItem('device_fingerprint');
+
+      if (isLoggingOut) {
+        sessionStorage.removeItem('is_logging_out');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
 
       // Redirect to login with a message
       window.location.href = '/login?reason=device_switched';

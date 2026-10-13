@@ -188,7 +188,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const handleLogout = async () => {
-    logout();
+    await logout();
     navigate('/login');
   };
 

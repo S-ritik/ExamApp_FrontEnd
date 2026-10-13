@@ -318,7 +318,14 @@ export default function ManagerDashboard() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleLogout = () => { logout(); navigate("/login"); };
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+    navigate("/login");
+  };
 
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
