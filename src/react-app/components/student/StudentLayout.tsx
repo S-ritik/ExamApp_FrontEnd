@@ -61,12 +61,16 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
                 {/* Logo Area */}
                 <div className="h-16 flex items-center px-4 border-b border-slate-100">
                     <div className="flex items-center gap-3 w-full">
-                        <div className="w-8 h-8 bg-gradient-to-br rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
                             <img
-                                src="/examlogo.png"
-                                alt="Exam Logo"
-                                className="w-8 h-8 object-contain rounded-md"
-                            />                       </div>
+                                src={user?.institute?.logo || "/examlogo.png"}
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "/examlogo.png";
+                                }}
+                            />
+                        </div>
                         {!sidebarCollapsed && (
                             <div className="flex-1 min-w-0">
                                 <h1 className="font-bold text-sm text-slate-900 leading-tight truncate">

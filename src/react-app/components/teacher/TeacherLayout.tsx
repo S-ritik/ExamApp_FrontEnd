@@ -73,11 +73,14 @@ export default function TeacherLayout({ children }: TeacherLayoutProps) {
                     {/* Logo / Context Switcher */}
                     <div className="h-16 flex items-center px-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors">
                         <div className="flex items-center gap-3 w-full">
-                            <div className="w-8 h-8 flex items-center justify-center mx-auto">
+                            <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
                                 <img
-                                    src="/examlogo.png"
-                                    alt="Exam Logo"
-                                    className="w-8 h-8 object-contain rounded-md"
+                                    src={user?.institute?.logo || "/examlogo.png"}
+                                    alt="Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = "/examlogo.png";
+                                    }}
                                 />
                             </div>
                             {!sidebarCollapsed && (

@@ -275,7 +275,8 @@ export default function InstituteProfile() {
   };
 
   const userRoleLower = currentUser?.role?.toLowerCase();
-  const canEdit = userRoleLower === 'super_admin';
+  const isOwnInstitute = currentUser?.institute_id === institute?.id || currentUser?.institute?.id === institute?.id;
+  const canEdit = userRoleLower === 'platform_owner' || userRoleLower === 'manager' || (userRoleLower === 'super_admin' && isOwnInstitute);
 
   if (loading) {
     return (
@@ -428,8 +429,21 @@ export default function InstituteProfile() {
             {/* Institute Header Card */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-700 p-4">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {institute?.logo ? (
+                    <img
+                      src={institute.logo}
+                      alt={institute.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/examlogo.png";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                      <Building2 className="w-8 h-8 text-white" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   {isEditing ? (

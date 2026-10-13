@@ -70,10 +70,10 @@ export default function CenterAdminLayout({ children }: CenterAdminLayoutProps) 
                     {/* Logo / Context Switcher */}
                     <div className="h-16 flex items-center px-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors">
                         <div className="flex items-center gap-3 w-full">
-                            <div className="w-10 h-10 border border-slate-100 rounded-lg flex items-center justify-center bg-white shadow-sm flex-shrink-0 overflow-hidden">
+                            <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
                                 <img
                                     src={user?.institute?.logo || "/examlogo.png"}
-                                    alt="Institute Logo"
+                                    alt="Logo"
                                     className="w-full h-full object-contain"
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).src = "/examlogo.png";

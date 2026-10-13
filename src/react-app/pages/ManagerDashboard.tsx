@@ -98,20 +98,21 @@ export default function ManagerDashboard() {
   const [bulkUploadResult, setBulkUploadResult] = useState<BulkUploadResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check authentication
+  // Check authentication - only manager and platform_owner allowed
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/login", { replace: true });
     }
-    const userRole = user?.role as string;
-    if (!authLoading && userRole !== "manager" && userRole !== "super_admin" && userRole !== "SUPER_ADMIN") {
+    const userRole = (user?.role as string)?.toLowerCase();
+    if (!authLoading && userRole !== "manager" && userRole !== "platform_owner") {
       navigate("/dashboard", { replace: true });
     }
   }, [user, isAuthenticated, authLoading, navigate]);
 
   // Fetch data
   useEffect(() => {
-    if (isAuthenticated && user) {
+    const userRole = (user?.role as string)?.toLowerCase();
+    if (isAuthenticated && (userRole === "manager" || userRole === "platform_owner")) {
       fetchInstitutes();
       fetchCenters();
       fetchAllUsers();
@@ -329,6 +330,27 @@ export default function ManagerDashboard() {
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gray-950"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
+  }
+
+  const userRole = (user?.role as string)?.toLowerCase();
+  if (userRole !== "manager" && userRole !== "platform_owner") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gray-950">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h1>
+          <p className="text-slate-600 dark:text-gray-400 mb-6">You don't have permission to access this page.</p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const navItems = [

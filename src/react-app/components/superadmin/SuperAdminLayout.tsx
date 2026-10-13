@@ -49,6 +49,22 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
+    const [instituteBranding, setInstituteBranding] = useState<{ name: string; logo: string }>({
+        name: (user as any)?.institute?.name || (user as any)?.institute_name || "DashoExams",
+        logo: (user as any)?.institute?.logo || "/examlogo.png",
+    });
+
+    useEffect(() => {
+        const currentLogo = (user as any)?.institute?.logo;
+        const currentName = (user as any)?.institute?.name || (user as any)?.institute_name;
+        if (currentLogo || currentName) {
+            setInstituteBranding({
+                name: currentName || instituteBranding.name,
+                logo: currentLogo || instituteBranding.logo,
+            });
+        }
+    }, [user]);
+
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
             navigate("/login", { replace: true });
@@ -190,26 +206,28 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                                 onClick={() => navigate('/superadmin/institutes')}
                                 className="flex items-center gap-3 w-full hover:bg-slate-100 cursor-pointer transition-colors py-2 px-2 rounded-md -mx-2 group"
                             >
-                                <img
-                                    src={(user as any)?.institute?.logo || "/examlogo.png"}
-                                    alt="Institute Logo"
-                                    className="w-10 h-10 object-contain flex-shrink-0 rounded-md group-hover:scale-105 transition-transform"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = "/examlogo.png";
-                                    }}
-                                />
+                                <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
+                                    <img
+                                        src={instituteBranding.logo}
+                                        alt={instituteBranding.name}
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = "/examlogo.png";
+                                        }}
+                                    />
+                                </div>
                                 <div className="flex-1 overflow-hidden">
-                                    <h1 className="font-bold text-md text-slate-900 leading-tight group-hover:text-violet-600 transition-colors">
-                                        {(user as any)?.institute?.name || (user as any)?.institute_name || "DashoExams"}
+                                    <h1 className="font-bold text-md text-slate-900 leading-tight group-hover:text-violet-600 transition-colors truncate">
+                                        {instituteBranding.name}
                                     </h1>
                                 </div>
                             </div>
                         ) : (
                             <div className="w-8 h-8 flex items-center justify-center mx-auto">
                                 <img
-                                    src={(user as any)?.institute?.logo || "/examlogo.png"}
-                                    alt="Institute Logo"
-                                    className="w-8 h-8 object-contain rounded-md"
+                                    src={instituteBranding.logo}
+                                    alt="Logo"
+                                    className="w-full h-full object-contain"
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).src = "/examlogo.png";
                                     }}

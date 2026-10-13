@@ -268,19 +268,11 @@ export default function Layout({ children }: LayoutProps) {
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between p-5 border-b border-slate-200/50 dark:border-gray-800/50">
                   <div className="flex items-center gap-3">
-                    <motion.div
-                      whileHover={{ scale: 1.05, rotate: 5 }}
-                      className={`relative w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-lg border border-slate-100 overflow-hidden`}
-                    >
-                      <img
-                        src={user?.institute?.logo || "/examlogo.png"}
-                        alt="Logo"
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/examlogo.png";
-                        }}
-                      />
-                    </motion.div>
+                    <img
+                      src={user?.institute?.logo || brandConfig.logo}
+                      alt={brandConfig.name}
+                      className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-gray-800 p-1 border border-slate-200 dark:border-gray-700"
+                    />
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">{brandConfig.name}</span>
                       <p className="text-xs text-slate-500 dark:text-gray-400">{brandConfig.subtitle}</p>
@@ -386,20 +378,11 @@ export default function Layout({ children }: LayoutProps) {
           {/* Logo */}
           <div className="flex items-center justify-between h-[72px] px-5 border-b border-slate-200/50 dark:border-gray-800/50">
             <div className="flex items-center gap-3 overflow-hidden">
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-lg border border-slate-100 flex-shrink-0 cursor-pointer overflow-hidden`}
-              >
-                <img
-                  src={user?.institute?.logo || "/examlogo.png"}
-                  alt="Logo"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/examlogo.png";
-                  }}
-                />
-              </motion.div>
+              <img
+                src={user?.institute?.logo || brandConfig.logo}
+                alt={brandConfig.name}
+                className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-gray-800 p-1 border border-slate-200 dark:border-gray-700 flex-shrink-0"
+              />
               <AnimatePresence>
                 {!sidebarCollapsed && (
                   <motion.div

@@ -43,6 +43,13 @@ interface User {
   onboarding_required?: boolean;
   phone?: string;
   profile_picture?: string;
+  institute?: {
+    id?: number | string;
+    name?: string;
+    logo?: string | null;
+    subdomain?: string | null;
+    website?: string | null;
+  } | null;
 }
 
 interface AuthContextType {
@@ -80,7 +87,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (token && savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
+          // Sync fresh profile in background to keep details up to date
+          api.get('/auth/profile/').then((res) => {
+            if (res.data) {
+              setUser(prev => {
+                const merged = { ...prev, ...res.data };
+                localStorage.setItem('user_data', JSON.stringify(merged));
+                return merged;
+              });
+            }
+          }).catch(() => {});
         } catch (e) {
           localStorage.removeItem('access_token');
           localStorage.removeItem('user_data');
@@ -179,6 +197,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('access_token', tokens.access);
       localStorage.setItem('refresh_token', tokens.refresh);
       localStorage.setItem('user_data', JSON.stringify(userData));
+
+      if (userData?.institute) {
+        setCachedBranding(userData.institute);
+      }
 
       if (device_session?.device_fingerprint) {
         localStorage.setItem('device_fingerprint', device_session.device_fingerprint);

@@ -18,6 +18,7 @@ import {
 import { useAuthContext } from '../contexts/AuthContext';
 import { api } from '../hooks/useApi';
 import DeviceConflictModal from '../components/DeviceConflictModal';
+import { resolveLogoUrl } from '../utils/branding';
 
 export default function TimetableLogin() {
   const [formData, setFormData] = useState({
@@ -72,19 +73,18 @@ export default function TimetableLogin() {
   useEffect(() => {
     const fetchSubdomainInfo = async () => {
       const subdomain = getSubdomain();
-      if (!subdomain) {
-        setSubdomainLoading(false);
-        return;
+      if (subdomain) {
+        try {
+          const response = await api.get(`/auth/institutes/by-subdomain/${subdomain}/`);
+          setSubdomainInfo(response.data);
+          setSubdomainLoading(false);
+          return;
+        } catch (err) {
+          console.error('Failed to fetch subdomain institute branding:', err);
+        }
       }
 
-      try {
-        const response = await api.get(`/auth/institutes/by-subdomain/${subdomain}/`);
-        setSubdomainInfo(response.data);
-      } catch (err) {
-        console.error('Failed to fetch subdomain institute branding:', err);
-      } finally {
-        setSubdomainLoading(false);
-      }
+      setSubdomainLoading(false);
     };
 
     fetchSubdomainInfo();
@@ -262,9 +262,12 @@ export default function TimetableLogin() {
                 {subdomainInfo.logo ? (
                   <div className="w-12 h-12 flex items-center justify-center border border-white/10 rounded-2xl bg-white p-1 shadow-lg">
                     <img
-                      src={subdomainInfo.logo}
+                      src={resolveLogoUrl(subdomainInfo.logo)}
                       alt={`${subdomainInfo.name} Logo`}
                       className="w-full h-full object-contain mx-auto"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/examlogo.png";
+                      }}
                     />
                   </div>
                 ) : (
@@ -361,9 +364,12 @@ export default function TimetableLogin() {
                 {subdomainInfo.logo ? (
                   <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-4 shadow-lg p-1 border border-slate-100">
                     <img
-                      src={subdomainInfo.logo}
+                      src={resolveLogoUrl(subdomainInfo.logo)}
                       alt={`${subdomainInfo.name} Logo`}
                       className="w-full h-full object-contain mx-auto"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/examlogo.png";
+                      }}
                     />
                   </div>
                 ) : (

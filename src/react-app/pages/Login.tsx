@@ -16,6 +16,7 @@ import {
 import { useAuthContext } from '../contexts/AuthContext';
 import { api } from '../hooks/useApi';
 import DeviceConflictModal from '../components/DeviceConflictModal';
+import { resolveLogoUrl } from '../utils/branding';
 
 // Google Client ID – set via env or fallback
 export default function Login() {
@@ -79,19 +80,18 @@ export default function Login() {
   useEffect(() => {
     const fetchSubdomainInfo = async () => {
       const subdomain = getSubdomain();
-      if (!subdomain) {
-        setSubdomainLoading(false);
-        return;
+      if (subdomain) {
+        try {
+          const response = await api.get(`/auth/institutes/by-subdomain/${subdomain}/`);
+          setSubdomainInfo(response.data);
+          setSubdomainLoading(false);
+          return;
+        } catch (err) {
+          console.error('Failed to fetch subdomain institute branding:', err);
+        }
       }
 
-      try {
-        const response = await api.get(`/auth/institutes/by-subdomain/${subdomain}/`);
-        setSubdomainInfo(response.data);
-      } catch (err) {
-        console.error('Failed to fetch subdomain institute branding:', err);
-      } finally {
-        setSubdomainLoading(false);
-      }
+      setSubdomainLoading(false);
     };
 
     fetchSubdomainInfo();
@@ -378,9 +378,12 @@ export default function Login() {
               {subdomainInfo.logo ? (
                 <div className="w-10 h-10 flex items-center justify-center border border-white/10 rounded-lg bg-white p-1">
                   <img
-                    src={subdomainInfo.logo}
+                    src={resolveLogoUrl(subdomainInfo.logo)}
                     alt={`${subdomainInfo.name} Logo`}
                     className="w-full h-full object-contain mx-auto"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/examlogo.png";
+                    }}
                   />
                 </div>
               ) : (
@@ -435,9 +438,12 @@ export default function Login() {
                 <>
                   {subdomainInfo.logo ? (
                     <img
-                      src={subdomainInfo.logo}
+                      src={resolveLogoUrl(subdomainInfo.logo)}
                       alt={subdomainInfo.name}
                       className="w-10 h-10 rounded-lg border-2 border-white/20 bg-white object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/examlogo.png";
+                      }}
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-lg border-2 border-white/20 bg-white/10 flex items-center justify-center">
@@ -498,9 +504,12 @@ export default function Login() {
               {subdomainInfo.logo ? (
                 <div className="w-10 h-10 flex items-center justify-center border border-slate-200 rounded-lg bg-white p-1">
                   <img
-                    src={subdomainInfo.logo}
+                    src={resolveLogoUrl(subdomainInfo.logo)}
                     alt={`${subdomainInfo.name} Logo`}
                     className="w-full h-full object-contain mx-auto"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/examlogo.png";
+                    }}
                   />
                 </div>
               ) : (
