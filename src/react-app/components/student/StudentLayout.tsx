@@ -11,6 +11,7 @@ import {
     X,
     ChevronLeft,
     BookOpen,
+    User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
 
@@ -23,6 +24,7 @@ const navItems = [
     { id: "exams", label: "My Exams", icon: BookOpen, href: "/student-exams" },
     { id: "results", label: "Results", icon: FileText, href: "/results" },
     { id: "analytics", label: "Analytics", icon: BarChart3, href: "/student-analytics" },
+    { id: "profile", label: "Profile", icon: UserIcon, href: "/student-profile" },
 ];
 
 export default function StudentLayout({ children }: StudentLayoutProps) {
@@ -49,6 +51,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         if (location.pathname.startsWith("/student-exams")) return "My Exams";
         if (location.pathname.startsWith("/results")) return "Exam Results";
         if (location.pathname.startsWith("/student-analytics")) return "Performance Analytics";
+        if (location.pathname.startsWith("/student-profile")) return "Profile";
         return "Student Dashboard";
     };
 

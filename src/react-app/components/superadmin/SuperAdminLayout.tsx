@@ -18,6 +18,7 @@ import {
     X,
     Activity,
     Zap,
+    User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { api } from "../../hooks/useApi";
@@ -29,6 +30,7 @@ interface SuperAdminLayoutProps {
 const platformNavItems = [
     { id: "overview", label: "Overview", icon: LayoutGrid, href: "/superadmin/dashboard" },
     { id: "users", label: "User Management", icon: Users, href: "/superadmin/users" },
+    { id: "profile", label: "Profile", icon: UserIcon, href: "/superadmin/profile" },
 ];
 
 const operationsNavItems = [
@@ -311,7 +313,7 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                                         </p>
                                         <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
                                     </div>
-                                    <Link to="/superadmin/settings" className="text-slate-400 hover:text-slate-600">
+                                    <Link to="/superadmin/profile" className="text-slate-400 hover:text-slate-600" title="Profile">
                                         <Settings className="w-[18px] h-[18px]" />
                                     </Link>
                                 </div>
@@ -338,9 +340,9 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                                     {user?.first_name?.[0] || "S"}
                                 </div>
                                 <Link
-                                    to="/superadmin/settings"
+                                    to="/superadmin/profile"
                                     className="text-slate-400 hover:text-slate-600"
-                                    title="Settings"
+                                    title="Profile"
                                 >
                                     <Settings className="w-[18px] h-[18px]" />
                                 </Link>

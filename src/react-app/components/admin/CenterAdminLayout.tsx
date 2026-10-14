@@ -12,6 +12,7 @@ import {
     Users as UsersIcon,
     Settings as SettingsIcon,
     Layers,
+    User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
 
@@ -24,6 +25,7 @@ const navItems = [
     { id: "exams", label: "Exams", icon: FileText, href: "/center-admin/exams" },
     { id: "people", label: "People", icon: UsersIcon, href: "/center-admin/people" },
     { id: "batches", label: "Batches", icon: Layers, href: "/center-admin/batches" },
+    { id: "profile", label: "Profile", icon: UserIcon, href: "/center-admin/profile" },
     { id: "settings", label: "Settings", icon: SettingsIcon, href: "/center-admin/settings" },
 ];
 
@@ -51,6 +53,7 @@ export default function CenterAdminLayout({ children }: CenterAdminLayoutProps) 
         if (location.pathname.startsWith("/center-admin/exams") || location.pathname.startsWith("/center-admin/patterns")) return "Exam Hub";
         if (location.pathname.startsWith("/center-admin/people")) return "People Management";
         if (location.pathname.startsWith("/center-admin/batches")) return "Batches & Programs";
+        if (location.pathname.startsWith("/center-admin/profile")) return "Profile";
         if (location.pathname.startsWith("/center-admin/settings")) return "Settings";
         return "Center Admin";
     };
