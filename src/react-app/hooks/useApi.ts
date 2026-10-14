@@ -117,7 +117,7 @@ const getDefaultApiUrl = () => {
     }
 
     // For local development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')) {
       // Option A: Use local backend (direct connection)
       return 'http://127.0.0.1:8000/api';
 
