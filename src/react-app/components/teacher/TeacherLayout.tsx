@@ -13,6 +13,7 @@ import {
     Award,
     ClipboardCheck,
     BarChart3,
+    User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
 
@@ -27,6 +28,7 @@ const navItems = [
     { id: "batches", label: "My Batches", icon: Layers, href: "/teacher/batches" },
     { id: "attendance", label: "Attendance", icon: ClipboardCheck, href: "/teacher/attendance" },
     { id: "analytics", label: "Insights", icon: BarChart3, href: "/teacher/analytics" },
+    { id: "profile", label: "Profile", icon: UserIcon, href: "/teacher/profile" },
 ];
 
 export default function TeacherLayout({ children }: TeacherLayoutProps) {
@@ -55,6 +57,7 @@ export default function TeacherLayout({ children }: TeacherLayoutProps) {
         if (location.pathname.startsWith("/teacher/batches")) return "My Batches";
         if (location.pathname.startsWith("/teacher/attendance")) return "Attendance Tracking";
         if (location.pathname.startsWith("/teacher/analytics")) return "Performance Insights";
+        if (location.pathname.startsWith("/teacher/profile")) return "Profile";
         if (location.pathname.startsWith("/teacher/settings")) return "Settings";
         return "Teacher Portal";
     };

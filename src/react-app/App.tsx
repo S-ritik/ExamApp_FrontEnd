@@ -505,6 +505,7 @@ function AppRoutes() {
               <Route path="pattern/:patternId/question/:subjectSlug/:questionNumber" element={<QuestionCreationEnhanced />} />
               <Route path="pattern/:patternId/question/:questionNumber" element={<QuestionCreationEnhanced />} />
               <Route path="exam/:examId/pattern/:patternId/bulk-import" element={<BulkImportPage />} />
+              <Route path="profile" element={<ProfileContent />} />
               <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/center-admin/dashboard" replace />} />
             </Routes>
@@ -566,6 +567,7 @@ function AppRoutes() {
               <Route path="batches" element={<AdminBatchesContent />} />
               <Route path="attendance" element={<AdminPeopleContent />} /> {/* Placeholder to match nav */}
               <Route path="analytics" element={<ExamResultsAnalyticsEnhanced />} /> {/* Placeholder to match nav */}
+              <Route path="profile" element={<ProfileContent />} />
               <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Routes>
@@ -695,6 +697,13 @@ function AppRoutes() {
         <FullscreenProtectedRoute>
           <StudentLayout>
             <StudentAnalytics />
+          </StudentLayout>
+        </FullscreenProtectedRoute>
+      } />
+      <Route path="/student-profile" element={
+        <FullscreenProtectedRoute>
+          <StudentLayout>
+            <ProfileContent />
           </StudentLayout>
         </FullscreenProtectedRoute>
       } />
