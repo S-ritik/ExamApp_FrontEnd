@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { api } from "../hooks/useApi";
 import { useAuthContext } from "../contexts/AuthContext";
+import { portalHost } from "../utils/subdomain";
 import { useNavigate } from "react-router-dom";
 import {
   Building2, Users, UserPlus, GraduationCap, BookOpen, Shield,
@@ -13,7 +14,7 @@ import {
 interface Institute {
   id: number;
   name: string;
-  domain?: string;
+  subdomain?: string | null;
   is_active: boolean;
   user_count?: number;
 }
@@ -78,7 +79,7 @@ export default function ManagerDashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; id: string | number; name: string } | null>(null);
 
   // Form states
-  const [instituteForm, setInstituteForm] = useState({ name: "", domain: "", description: "" });
+  const [instituteForm, setInstituteForm] = useState({ name: "", description: "" });
   const [centerForm, setCenterForm] = useState({ institute_id: "", name: "", city: "", address: "" });
   const [userForm, setUserForm] = useState({
     role: "ADMIN",
@@ -172,7 +173,7 @@ export default function ManagerDashboard() {
       await api.post("/auth/institutes/", instituteForm);
       setSuccess("Institute created successfully!");
       setShowCreateInstitute(false);
-      setInstituteForm({ name: "", domain: "", description: "" });
+      setInstituteForm({ name: "", description: "" });
       fetchInstitutes();
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to create institute");
@@ -504,7 +505,7 @@ export default function ManagerDashboard() {
                   <thead className="bg-slate-50 dark:bg-gray-800">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Name</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Domain</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Portal Address</th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
                       <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Actions</th>
                     </tr>
@@ -513,7 +514,7 @@ export default function ManagerDashboard() {
                     {institutes.map((inst) => (
                       <tr key={inst.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/50">
                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{inst.name}</td>
-                        <td className="px-6 py-4 text-slate-500">{inst.domain || "-"}</td>
+                        <td className="px-6 py-4 text-slate-500">{inst.subdomain ? portalHost(inst.subdomain) : "-"}</td>
                         <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-medium ${inst.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{inst.is_active ? "Active" : "Inactive"}</span></td>
                         <td className="px-6 py-4 text-right">
                           <button
@@ -894,11 +895,6 @@ export default function ManagerDashboard() {
                 <label className="block text-sm font-medium text-slate-700 mb-2">Institute Name *</label>
                 <input type="text" value={instituteForm.name} onChange={(e) => setInstituteForm({ ...instituteForm, name: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., DiracAI Institute" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Domain</label>
-                <input type="text" value={instituteForm.domain} onChange={(e) => setInstituteForm({ ...instituteForm, domain: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., diracai.com" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>

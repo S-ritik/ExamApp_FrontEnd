@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { motion } from 'framer-motion';
 import {
@@ -16,9 +16,9 @@ import {
   Building2,
 } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { api } from '../hooks/useApi';
 import DeviceConflictModal from '../components/DeviceConflictModal';
 import { resolveLogoUrl } from '../utils/branding';
+import { usePortal } from '../contexts/PortalContext';
 
 export default function TimetableLogin() {
   const [formData, setFormData] = useState({
@@ -33,62 +33,8 @@ export default function TimetableLogin() {
   const { login, deviceConflict, setDeviceConflict } = useAuthContext();
   const navigate = useNavigate();
 
-  interface SubdomainInstitute {
-    id: number;
-    name: string;
-    logo: string | null;
-    subdomain: string;
-    website: string | null;
-    description: string | null;
-  }
-
-  const [subdomainInfo, setSubdomainInfo] = useState<SubdomainInstitute | null>(null);
-  const [subdomainLoading, setSubdomainLoading] = useState(true);
-
-  const getSubdomain = () => {
-    if (typeof window === 'undefined') return null;
-    const hostname = window.location.hostname;
-
-    // Support testing subdomain locally using URL query parameter: ?subdomain=mit
-    const urlParams = new URLSearchParams(window.location.search);
-    const qaSubdomain = urlParams.get('subdomain');
-    if (qaSubdomain) return qaSubdomain;
-
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return null;
-
-    const ROOT_DOMAIN = 'exams.dashoapp.com';
-    const TIMETABLE_DOMAIN = 'timetable.dashoapp.com';
-
-    if (hostname !== ROOT_DOMAIN && hostname !== TIMETABLE_DOMAIN) {
-      if (hostname.endsWith('.' + ROOT_DOMAIN)) {
-        return hostname.replace('.' + ROOT_DOMAIN, '');
-      }
-      if (hostname.endsWith('.localhost')) {
-        return hostname.replace('.localhost', '');
-      }
-    }
-    return null;
-  };
-
-  useEffect(() => {
-    const fetchSubdomainInfo = async () => {
-      const subdomain = getSubdomain();
-      if (subdomain) {
-        try {
-          const response = await api.get(`/auth/institutes/by-subdomain/${subdomain}/`);
-          setSubdomainInfo(response.data);
-          setSubdomainLoading(false);
-          return;
-        } catch (err) {
-          console.error('Failed to fetch subdomain institute branding:', err);
-        }
-      }
-
-      setSubdomainLoading(false);
-    };
-
-    fetchSubdomainInfo();
-  }, []);
+  // Institute behind this subdomain (resolved once by PortalProvider)
+  const { institute: subdomainInfo } = usePortal();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

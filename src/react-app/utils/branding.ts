@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../hooks/useApi';
+
 export interface CachedBranding {
   id?: number | string;
   name: string;
@@ -25,10 +27,9 @@ export const resolveLogoUrl = (url: string | null | undefined): string => {
     return trimmed;
   }
 
-  // Relative path (e.g. /media/institute_logos/xxx.png or media/...)
-  const backendBase =
-    (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/api\/?$/, '') ||
-    'http://127.0.0.1:8000';
+  // Relative path (e.g. /media/institute_logos/xxx.png or media/...): served
+  // by the same backend as the API, whichever host that is.
+  const backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
 
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${backendBase}${cleanPath}`;

@@ -5,13 +5,19 @@ import {
     CheckCircle, XCircle, MoreVertical, Activity,
     ShieldCheck, MapPin, Calendar, ExternalLink, Settings
 } from 'lucide-react';
-import { api } from '../hooks/useApi';
+import { api, extractApiError } from '../hooks/useApi';
+import { normalizeSubdomain, validateSubdomain, portalHost } from '../utils/subdomain';
+
+// Field error from the backend (e.g. subdomain taken), else the general detail.
+const apiFieldError = (err: unknown, field: string, fallback: string) => {
+    const apiErr = extractApiError(err);
+    return apiErr.errors?.[field]?.[0] || apiErr.detail || fallback;
+};
 
 interface Institute {
     id: number;
     name: string;
     subdomain: string | null;
-    domain: string | null;
     contact_email: string;
     is_verified: boolean;
     is_active: boolean;
@@ -39,7 +45,6 @@ export default function PlatformInstitutes() {
     const [formData, setFormData] = useState({
         name: '',
         subdomain: '',
-        domain: '',
         contact_email: '',
         admin_email: '',
         admin_username: '',
@@ -51,6 +56,9 @@ export default function PlatformInstitutes() {
     const [isEditingSubdomain, setIsEditingSubdomain] = useState(false);
     const [editedSubdomain, setEditedSubdomain] = useState('');
     const [updateLoading, setUpdateLoading] = useState(false);
+    const [subdomainEditError, setSubdomainEditError] = useState<string | null>(null);
+
+    const createSubdomainError = validateSubdomain(normalizeSubdomain(formData.subdomain));
 
     const fetchInstitutes = async () => {
         try {
@@ -70,17 +78,21 @@ export default function PlatformInstitutes() {
 
     const handleCreateInstitute = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (createSubdomainError) return;
         setCreateLoading(true);
         try {
-            await api.post('/auth/platform/institutes/create-with-admin/', formData);
+            await api.post('/auth/platform/institutes/create-with-admin/', {
+                ...formData,
+                subdomain: normalizeSubdomain(formData.subdomain) || null,
+            });
             setShowCreateModal(false);
             fetchInstitutes();
             setFormData({
-                name: '', subdomain: '', domain: '', contact_email: '', admin_email: '',
+                name: '', subdomain: '', contact_email: '', admin_email: '',
                 admin_username: '', admin_first_name: '', admin_last_name: '', admin_password: ''
             });
         } catch (err) {
-            alert('Failed to create institute');
+            alert(apiFieldError(err, 'subdomain', 'Failed to create institute'));
         } finally {
             setCreateLoading(false);
         }
@@ -88,21 +100,29 @@ export default function PlatformInstitutes() {
 
     const handleUpdateSubdomain = async () => {
         if (!selectedInstitute) return;
+        const value = normalizeSubdomain(editedSubdomain);
+        const invalid = validateSubdomain(value);
+        if (invalid) {
+            setSubdomainEditError(invalid);
+            return;
+        }
         setUpdateLoading(true);
         try {
+            // Empty clears the subdomain; the institute then uses the main portal.
             const response = await api.patch(`/auth/platform/institutes/${selectedInstitute.id}/`, {
-                subdomain: editedSubdomain
+                subdomain: value || null
             });
-            // Update local state
+            const saved: string | null = response.data?.subdomain ?? null;
             setInstitutes(prev => prev.map(inst =>
-                inst.id === selectedInstitute.id ? { ...inst, subdomain: editedSubdomain } : inst
+                inst.id === selectedInstitute.id ? { ...inst, subdomain: saved } : inst
             ));
-            setSelectedInstitute({ ...selectedInstitute, subdomain: editedSubdomain });
+            setSelectedInstitute({ ...selectedInstitute, subdomain: saved });
             setIsEditingSubdomain(false);
-            alert('Subdomain updated successfully');
+            setSubdomainEditError(null);
+            alert(saved ? 'Subdomain updated successfully' : 'Subdomain removed');
         } catch (err) {
             console.error('Failed to update subdomain', err);
-            alert('Failed to update subdomain. Ensure it is unique.');
+            setSubdomainEditError(apiFieldError(err, 'subdomain', 'Failed to update subdomain.'));
         } finally {
             setUpdateLoading(false);
         }
@@ -110,7 +130,8 @@ export default function PlatformInstitutes() {
 
     const filteredInstitutes = institutes.filter(inst => {
         const matchesSearch = inst.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            inst.contact_email.toLowerCase().includes(searchQuery.toLowerCase());
+            inst.contact_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (inst.subdomain ?? '').includes(searchQuery.toLowerCase());
 
         if (activeTab === 'verified') return matchesSearch && inst.is_verified;
         if (activeTab === 'pending') return matchesSearch && !inst.is_verified;
@@ -189,7 +210,7 @@ export default function PlatformInstitutes() {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder="Search by name, email or domain..."
+                            placeholder="Search by name, email or portal address..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-slate-50/50 text-sm font-medium"
@@ -230,7 +251,7 @@ export default function PlatformInstitutes() {
                                                 <div>
                                                     <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{inst.name}</p>
                                                     <p className="text-xs font-semibold text-slate-400 flex items-center gap-1 mt-0.5">
-                                                        <Globe className="w-3 h-3 text-indigo-400" /> {inst.domain || inst.contact_email.split('@')[1]}
+                                                        <Globe className="w-3 h-3 text-indigo-400" /> {inst.subdomain ? portalHost(inst.subdomain) : inst.contact_email}
                                                     </p>
                                                 </div>
                                             </div>
@@ -363,27 +384,25 @@ export default function PlatformInstitutes() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">Subdomain</label>
+                                                <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">Portal Address</label>
                                                 <div className="relative">
                                                     <input
                                                         value={formData.subdomain}
-                                                        onChange={(e) => setFormData({ ...formData, subdomain: e.target.value })}
-                                                        className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all bg-slate-50/50 font-bold placeholder:text-slate-300 pr-32"
-                                                        placeholder="e.g. iitmadras"
+                                                        onChange={(e) => setFormData({ ...formData, subdomain: e.target.value.toLowerCase() })}
+                                                        maxLength={63}
+                                                        aria-invalid={!!createSubdomainError}
+                                                        className={`w-full px-6 py-4 rounded-2xl border ${createSubdomainError ? 'border-red-300' : 'border-slate-200'} focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all bg-slate-50/50 font-bold placeholder:text-slate-300 pr-32`}
+                                                        placeholder="Optional, e.g. iitmadras"
                                                     />
                                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">
                                                         .exams.dashoapp.com
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">Custom Domain</label>
-                                                <input
-                                                    value={formData.domain}
-                                                    onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                                                    className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all bg-slate-50/50 font-bold placeholder:text-slate-300"
-                                                    placeholder="stanford.edu"
-                                                />
+                                                {createSubdomainError ? (
+                                                    <p className="mt-2 ml-1 text-xs font-semibold text-red-600">{createSubdomainError}</p>
+                                                ) : (
+                                                    <p className="mt-2 ml-1 text-xs text-slate-400">Leave empty to use the main portal only.</p>
+                                                )}
                                             </div>
                                             <div>
                                                 <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">Contact Email</label>
@@ -466,7 +485,7 @@ export default function PlatformInstitutes() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={createLoading}
+                                        disabled={createLoading || !!createSubdomainError}
                                         className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-600/20 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]"
                                     >
                                         {createLoading ? (
@@ -631,7 +650,12 @@ export default function PlatformInstitutes() {
                                                             <div className="relative group/input">
                                                                 <input
                                                                     value={editedSubdomain}
-                                                                    onChange={(e) => setEditedSubdomain(e.target.value)}
+                                                                    onChange={(e) => {
+                                                                        setEditedSubdomain(e.target.value.toLowerCase());
+                                                                        setSubdomainEditError(null);
+                                                                    }}
+                                                                    maxLength={63}
+                                                                    aria-invalid={!!subdomainEditError}
                                                                     autoFocus
                                                                     className="w-full px-5 py-4 rounded-2xl border-2 border-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none font-black text-lg text-indigo-900 transition-all pr-[180px]"
                                                                     placeholder="subdomain"
@@ -640,6 +664,11 @@ export default function PlatformInstitutes() {
                                                                     .exams.dashoapp.com
                                                                 </div>
                                                             </div>
+                                                            {subdomainEditError ? (
+                                                                <p className="text-xs font-semibold text-red-600">{subdomainEditError}</p>
+                                                            ) : (
+                                                                <p className="text-xs text-slate-400">Leave empty to remove the subdomain.</p>
+                                                            )}
                                                             <div className="flex gap-3">
                                                                 <button
                                                                     onClick={handleUpdateSubdomain}
@@ -656,7 +685,7 @@ export default function PlatformInstitutes() {
                                                                     )}
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => setIsEditingSubdomain(false)}
+                                                                    onClick={() => { setIsEditingSubdomain(false); setSubdomainEditError(null); }}
                                                                     className="px-6 py-3.5 bg-white text-slate-500 border border-slate-200 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all"
                                                                 >
                                                                     Cancel

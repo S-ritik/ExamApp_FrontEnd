@@ -15,6 +15,8 @@ import {
     User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { useBranding } from "../../hooks/useBranding";
+import BrandLogo from "../common/BrandLogo";
 
 interface CenterAdminLayoutProps {
     children: React.ReactNode;
@@ -33,6 +35,7 @@ export default function CenterAdminLayout({ children }: CenterAdminLayoutProps) 
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { user, logout } = useAuthContext();
+    const branding = useBranding();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -74,20 +77,13 @@ export default function CenterAdminLayout({ children }: CenterAdminLayoutProps) 
                     <div className="h-16 flex items-center px-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors">
                         <div className="flex items-center gap-3 w-full">
                             <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
-                                <img
-                                    src={user?.institute?.logo || "/examlogo.png"}
-                                    alt="Logo"
-                                    className="w-full h-full object-contain"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = "/examlogo.png";
-                                    }}
-                                />
+                                <BrandLogo className="w-full h-full object-contain" />
                             </div>
                             {!sidebarCollapsed && (
                                 <>
                                     <div className="flex-1 min-w-0">
                                         <h1 className="font-bold text-sm text-slate-900 leading-tight truncate">
-                                            {user?.institute?.name || user?.institute_name || "DashoExams"}
+                                            {branding.name}
                                         </h1>
                                         <p className="text-[10px] text-slate-500 font-medium tracking-wide whitespace-nowrap">CENTER ADMIN</p>
                                     </div>
@@ -224,16 +220,9 @@ export default function CenterAdminLayout({ children }: CenterAdminLayoutProps) 
                             <div className="flex items-center justify-between p-5 border-b border-slate-200">
                                 <div className="flex items-center gap-2">
                                     <div className="w-10 h-10 border border-slate-100 rounded-lg flex items-center justify-center bg-white shadow-sm overflow-hidden">
-                                        <img
-                                            src={user?.institute?.logo || "/examlogo.png"}
-                                            alt="Institute Logo"
-                                            className="w-full h-full object-contain"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).src = "/examlogo.png";
-                                            }}
-                                        />
+                                        <BrandLogo className="w-full h-full object-contain" />
                                     </div>
-                                    <span className="font-bold text-slate-900 text-sm">DashoExams</span>
+                                    <span className="font-bold text-slate-900 text-sm">{branding.name}</span>
                                 </div>
                                 <button onClick={() => setMobileMenuOpen(false)}>
                                     <X className="w-5 h-5 text-slate-600" />

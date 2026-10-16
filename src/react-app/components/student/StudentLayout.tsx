@@ -14,6 +14,8 @@ import {
     User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { useBranding } from "../../hooks/useBranding";
+import BrandLogo from "../common/BrandLogo";
 
 interface StudentLayoutProps {
     children: React.ReactNode;
@@ -31,6 +33,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { user, logout } = useAuthContext();
+    const branding = useBranding();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -65,19 +68,12 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
                 <div className="h-16 flex items-center px-4 border-b border-slate-100">
                     <div className="flex items-center gap-3 w-full">
                         <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
-                            <img
-                                src={user?.institute?.logo || "/examlogo.png"}
-                                alt="Logo"
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "/examlogo.png";
-                                }}
-                            />
+                            <BrandLogo className="w-full h-full object-contain" />
                         </div>
                         {!sidebarCollapsed && (
                             <div className="flex-1 min-w-0">
                                 <h1 className="font-bold text-sm text-slate-900 leading-tight truncate">
-                                    {user?.institute?.name || user?.institute_name || "DashoExams"}
+                                    {branding.name}
                                 </h1>
                                 <p className="text-[10px] text-slate-500 font-medium tracking-wide whitespace-nowrap uppercase">Student Portal</p>
                             </div>

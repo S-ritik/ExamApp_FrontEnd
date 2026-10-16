@@ -10,7 +10,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Globe,
   Sparkles,
   AlertCircle,
   Zap,
@@ -33,7 +32,6 @@ export default function Onboarding() {
 
   const [instituteData, setInstituteData] = useState({
     name: '',
-    domain: '',
     description: '',
     contact_email: '',
     contact_phone: '',
@@ -462,25 +460,6 @@ export default function Onboarding() {
                     </div>
 
 
-                    {/* Domain */}
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Domain <span className="text-slate-400 font-normal">(Optional)</span>
-                      </label>
-                      <div className={`relative rounded-xl transition-all ${focusedField === 'domain' ? 'ring-2 ring-indigo-500/20' : ''}`}>
-                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="text"
-                          name="domain"
-                          value={instituteData.domain}
-                          onChange={handleInstituteInputChange}
-                          onFocus={() => setFocusedField('domain')}
-                          onBlur={() => setFocusedField(null)}
-                          placeholder="e.g., university.edu"
-                          className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"
-                        />
-                      </div>
-                    </div>
 
                     {/* Contact Email */}
                     <div>

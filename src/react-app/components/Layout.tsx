@@ -32,6 +32,8 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useOnboardingTour } from '../contexts/OnboardingTourContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTimetableCenter } from '../contexts/TimetableCenterContext';
+import { useBranding } from '../hooks/useBranding';
+import BrandLogo from './common/BrandLogo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -75,6 +77,8 @@ export default function Layout({ children }: LayoutProps) {
       gradientTo: 'to-violet-600',
       shadowColor: 'shadow-blue-500/30'
     };
+  const branding = useBranding();
+  const brandName = isTimetableDomain ? brandConfig.name : branding.name;
 
   const toggleTheme = () => {
     setTheme(actualTheme === 'dark' ? 'light' : 'dark');
@@ -268,13 +272,9 @@ export default function Layout({ children }: LayoutProps) {
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between p-5 border-b border-slate-200/50 dark:border-gray-800/50">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={user?.institute?.logo || brandConfig.logo}
-                      alt={brandConfig.name}
-                      className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-gray-800 p-1 border border-slate-200 dark:border-gray-700"
-                    />
+                    <BrandLogo className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-gray-800 p-1 border border-slate-200 dark:border-gray-700" />
                     <div>
-                      <span className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">{brandConfig.name}</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">{brandName}</span>
                       <p className="text-xs text-slate-500 dark:text-gray-400">{brandConfig.subtitle}</p>
                     </div>
                   </div>
@@ -378,11 +378,7 @@ export default function Layout({ children }: LayoutProps) {
           {/* Logo */}
           <div className="flex items-center justify-between h-[72px] px-5 border-b border-slate-200/50 dark:border-gray-800/50">
             <div className="flex items-center gap-3 overflow-hidden">
-              <img
-                src={user?.institute?.logo || brandConfig.logo}
-                alt={brandConfig.name}
-                className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-gray-800 p-1 border border-slate-200 dark:border-gray-700 flex-shrink-0"
-              />
+              <BrandLogo className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-gray-800 p-1 border border-slate-200 dark:border-gray-700 flex-shrink-0" />
               <AnimatePresence>
                 {!sidebarCollapsed && (
                   <motion.div
@@ -391,7 +387,7 @@ export default function Layout({ children }: LayoutProps) {
                     exit={{ opacity: 0, width: 0 }}
                     className="overflow-hidden"
                   >
-                    <span className="font-bold text-slate-900 dark:text-white text-lg whitespace-nowrap tracking-tight">{brandConfig.name}</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-lg whitespace-nowrap tracking-tight">{brandName}</span>
                     <p className="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap">{brandConfig.subtitle}</p>
                   </motion.div>
                 )}
@@ -844,7 +840,7 @@ export default function Layout({ children }: LayoutProps) {
         <footer className="relative bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-t border-slate-200/50 dark:border-gray-800/50 py-4">
           <div className="px-4 lg:px-6 flex items-center justify-between">
             <p className="text-xs text-slate-500 dark:text-gray-400">
-              © 2024 {brandConfig.name}. All rights reserved.
+              © 2024 {brandName}. All rights reserved.
             </p>
             <p className="text-xs text-slate-500 dark:text-gray-400">
               Powered by{' '}

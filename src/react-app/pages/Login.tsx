@@ -14,9 +14,9 @@ import {
   Building2,
 } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { api } from '../hooks/useApi';
 import DeviceConflictModal from '../components/DeviceConflictModal';
 import { resolveLogoUrl } from '../utils/branding';
+import { usePortal } from '../contexts/PortalContext';
 
 // Google Client ID – set via env or fallback
 export default function Login() {
@@ -27,7 +27,11 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() =>
+    new URLSearchParams(window.location.search).get('reason') === 'wrong_portal'
+      ? 'You were signed out because that account does not belong to this portal. Please sign in again.'
+      : ''
+  );
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [signupRole, setSignupRole] = useState<'student' | 'institution'>('student');
@@ -40,76 +44,8 @@ export default function Login() {
   const { login, loginWithGoogle, deviceConflict, setDeviceConflict } = useAuthContext();
   const navigate = useNavigate();
 
-  interface SubdomainInstitute {
-    id: number;
-    name: string;
-    logo: string | null;
-    subdomain: string;
-    website: string | null;
-    description: string | null;
-  }
-
-  const [subdomainInfo, setSubdomainInfo] = useState<SubdomainInstitute | null>(null);
-  const [subdomainLoading, setSubdomainLoading] = useState(true);
-  const [subdomainNotFound, setSubdomainNotFound] = useState<string | null>(null);
-
-  const getSubdomain = () => {
-    if (typeof window === 'undefined') return null;
-    const hostname = window.location.hostname;
-
-    // Support testing subdomain locally using URL query parameter: ?subdomain=kiitis
-    const urlParams = new URLSearchParams(window.location.search);
-    const qaSubdomain = urlParams.get('subdomain');
-    if (qaSubdomain) return qaSubdomain.toLowerCase().trim();
-
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return null;
-
-    const ROOT_DOMAIN = 'exams.dashoapp.com';
-    const TIMETABLE_DOMAIN = 'timetable.dashoapp.com';
-
-    // 1. Matches *.exams.dashoapp.com (e.g. kiitis.exams.dashoapp.com)
-    if (hostname.endsWith('.' + ROOT_DOMAIN)) {
-      return hostname.replace('.' + ROOT_DOMAIN, '').toLowerCase().trim();
-    }
-
-    // 2. Matches *.dashoapp.com (e.g. kiitis.dashoapp.com)
-    if (hostname.endsWith('.dashoapp.com') && hostname !== ROOT_DOMAIN && hostname !== TIMETABLE_DOMAIN && hostname !== 'dashoapp.com') {
-      return hostname.replace('.dashoapp.com', '').toLowerCase().trim();
-    }
-
-    // 3. Matches *.localhost (e.g. kiitis.localhost)
-    if (hostname.endsWith('.localhost')) {
-      return hostname.replace('.localhost', '').toLowerCase().trim();
-    }
-
-    return null;
-  };
-
-  useEffect(() => {
-    const fetchSubdomainInfo = async () => {
-      const subdomain = getSubdomain();
-      if (subdomain) {
-        try {
-          const response = await api.get(`/auth/institutes/by-subdomain/${subdomain}/`);
-          setSubdomainInfo(response.data);
-          setSubdomainNotFound(null);
-          setSubdomainLoading(false);
-          return;
-        } catch (err: any) {
-          console.error('Failed to fetch subdomain institute branding:', err);
-          setSubdomainInfo(null);
-          setSubdomainNotFound(subdomain);
-          setSubdomainLoading(false);
-          return;
-        }
-      }
-
-      setSubdomainNotFound(null);
-      setSubdomainLoading(false);
-    };
-
-    fetchSubdomainInfo();
-  }, []);
+  // Institute behind this subdomain (resolved once by PortalProvider)
+  const { institute: subdomainInfo } = usePortal();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -347,49 +283,6 @@ export default function Login() {
     setDeviceConflict(null);
     setError('Login cancelled. Please use your other device or contact support.');
   };
-
-  if (subdomainLoading && getSubdomain()) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-gray-950">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (subdomainNotFound) {
-    const isLocalhost = typeof window !== 'undefined' && window.location.hostname.includes('localhost');
-    const isDashoapp = typeof window !== 'undefined' && window.location.hostname.endsWith('dashoapp.com');
-    const mainPortalUrl =
-      typeof window !== 'undefined'
-        ? `${window.location.protocol}//${isLocalhost ? 'localhost:5173' : (isDashoapp ? 'exams.dashoapp.com' : window.location.host)}/login`
-        : '/login';
-
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-gray-950 p-6">
-        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-800 p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Building2 className="w-8 h-8 text-red-600 dark:text-red-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Institute Not Found
-          </h1>
-          <p className="text-slate-600 dark:text-gray-400 text-sm mb-6 leading-relaxed">
-            No active institute is registered under the subdomain{' '}
-            <span className="font-semibold text-slate-900 dark:text-white font-mono bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded border border-slate-200 dark:border-gray-700">
-              "{subdomainNotFound}"
-            </span>
-            . Please check the URL or access the main portal.
-          </p>
-          <a
-            href={mainPortalUrl}
-            className="w-full inline-flex justify-center items-center px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-md"
-          >
-            Go to Main Portal
-          </a>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen flex overflow-hidden text-slate-900">
@@ -821,7 +714,7 @@ export default function Login() {
             <a href="#" className="hover:text-slate-600 transition-colors font-medium">Help Center</a>
           </div>
           <p className="mt-2 text-xs text-slate-400">
-            © 2024 DashoExams Inc. All rights reserved. Powered by{' '}
+            © 2024 {subdomainInfo ? subdomainInfo.name : 'DashoExams Inc.'} All rights reserved. Powered by{' '}
             <a
               href="https://diracai.com/"
               target="_blank"

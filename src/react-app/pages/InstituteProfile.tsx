@@ -5,13 +5,17 @@ import {
   Edit2, Save, X, CheckCircle, AlertCircle, Clock, Shield,
   Calendar, FileText, Activity, TrendingUp, Award, UserCheck
 } from 'lucide-react';
-import { api } from '../hooks/useApi';
+import { api, extractApiError } from '../hooks/useApi';
 import { useAuthContext } from '../contexts/AuthContext';
+import { normalizeSubdomain, validateSubdomain, portalHost, portalUrl, ROOT_DOMAIN } from '../utils/subdomain';
+
+// Portal addresses are assigned by DiracAI staff only
+const PLATFORM_ROLES = ['platform_owner', 'manager'];
 
 interface Institute {
   id: number;
   name: string;
-  domain: string;
+  subdomain: string | null;
   description: string;
   address: string;
   contact_email: string;
@@ -77,13 +81,15 @@ export default function InstituteProfile() {
 
   const [formData, setFormData] = useState({
     name: '',
-    domain: '',
     description: '',
     address: '',
     contact_email: '',
     contact_phone: '',
     website: '',
   });
+
+  const [subdomainInput, setSubdomainInput] = useState('');
+  const [subdomainError, setSubdomainError] = useState<string | null>(null);
 
   const [settingsFormData, setSettingsFormData] = useState({
     allow_student_registration: true,
@@ -102,13 +108,14 @@ export default function InstituteProfile() {
     if (institute) {
       setFormData({
         name: institute.name || '',
-        domain: institute.domain || '',
         description: institute.description || '',
         address: institute.address || '',
         contact_email: institute.contact_email || '',
         contact_phone: institute.contact_phone || '',
         website: institute.website || '',
       });
+      setSubdomainInput(institute.subdomain || '');
+      setSubdomainError(null);
     }
   }, [institute]);
 
@@ -245,8 +252,29 @@ export default function InstituteProfile() {
         return;
       }
 
+      const subdomain = normalizeSubdomain(subdomainInput);
+      const subdomainChanged = isPlatformStaff && subdomain !== (institute?.subdomain || '');
+      const invalidSubdomain = subdomainChanged ? validateSubdomain(subdomain) : null;
+      if (invalidSubdomain) {
+        setSubdomainError(invalidSubdomain);
+        return;
+      }
+
       const response = await api.put(`/auth/institutes/${instituteId}/update/`, formData);
-      setInstitute(response.data);
+      let updated = response.data;
+      if (subdomainChanged) {
+        // Portal addresses can only be assigned through the platform endpoint.
+        // On failure stay in edit mode; saving again re-sends the details.
+        try {
+          const res = await api.patch(`/auth/platform/institutes/${instituteId}/`, { subdomain: subdomain || null });
+          updated = { ...updated, subdomain: res.data?.subdomain ?? null };
+        } catch (err) {
+          const apiErr = extractApiError(err);
+          setSubdomainError(apiErr.errors?.subdomain?.[0] || apiErr.detail || 'Failed to update portal address');
+          return;
+        }
+      }
+      setInstitute(updated);
       setSuccess('Institute details updated successfully');
       setIsEditing(false);
     } catch (err: any) {
@@ -276,7 +304,8 @@ export default function InstituteProfile() {
 
   const userRoleLower = currentUser?.role?.toLowerCase();
   const isOwnInstitute = currentUser?.institute_id === institute?.id || currentUser?.institute?.id === institute?.id;
-  const canEdit = userRoleLower === 'platform_owner' || userRoleLower === 'manager' || (userRoleLower === 'super_admin' && isOwnInstitute);
+  const isPlatformStaff = PLATFORM_ROLES.includes(userRoleLower ?? '');
+  const canEdit = isPlatformStaff || (userRoleLower === 'super_admin' && isOwnInstitute);
 
   if (loading) {
     return (
@@ -569,25 +598,49 @@ export default function InstituteProfile() {
                 )}
               </div>
 
-              {/* Domain */}
+              {/* Portal address (subdomain) */}
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-700 p-4">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-2">
                   <Shield className="w-4 h-4" />
-                  Email Domain
+                  Portal Address
                 </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="domain"
-                    value={formData.domain}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                    placeholder="institute.edu"
-                  />
+                {isEditing && isPlatformStaff ? (
+                  <>
+                    <div className={`flex items-center rounded-lg border ${subdomainError ? 'border-red-400' : 'border-slate-300 dark:border-gray-600'} bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-blue-500`}>
+                      <input
+                        type="text"
+                        value={subdomainInput}
+                        onChange={(e) => {
+                          setSubdomainInput(e.target.value.toLowerCase());
+                          setSubdomainError(validateSubdomain(normalizeSubdomain(e.target.value)));
+                        }}
+                        maxLength={63}
+                        aria-invalid={!!subdomainError}
+                        className="min-w-0 flex-1 px-3 py-2 bg-transparent text-gray-900 dark:text-white text-sm outline-none"
+                        placeholder="e.g. kiit"
+                      />
+                      <span className="pr-3 text-sm text-slate-400 dark:text-gray-500 whitespace-nowrap">.{ROOT_DOMAIN}</span>
+                    </div>
+                    <p className={`mt-1 text-xs ${subdomainError ? 'text-red-600' : 'text-slate-400 dark:text-gray-500'}`}>
+                      {subdomainError || 'Letters, numbers and hyphens only. Leave empty to use the main portal.'}
+                    </p>
+                  </>
+                ) : institute.subdomain ? (
+                  <a
+                    href={portalUrl(institute.subdomain)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline break-all"
+                  >
+                    {portalHost(institute.subdomain)}
+                  </a>
                 ) : (
                   <p className="text-sm text-slate-600 dark:text-gray-400">
-                    {institute.domain || 'Not set'}
+                    Not set (uses {ROOT_DOMAIN})
                   </p>
+                )}
+                {isEditing && !isPlatformStaff && (
+                  <p className="mt-1 text-xs text-slate-400 dark:text-gray-500">Set by DiracAI. Contact support to change it.</p>
                 )}
               </div>
 

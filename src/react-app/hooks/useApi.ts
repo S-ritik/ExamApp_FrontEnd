@@ -116,8 +116,14 @@ const getDefaultApiUrl = () => {
       return 'https://exams.dashoapp.com/api'; // Timetable uses same backend
     }
 
+    // Local institute portal (e.g. kiit.localhost:5173): talk to the local
+    // backend on the same host so it can resolve the subdomain (DEBUG only).
+    if (hostname.endsWith('.localhost')) {
+      return `http://${hostname}:8000/api`;
+    }
+
     // For local development
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')) {
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
       // Option A: Use local backend (direct connection)
       return 'http://127.0.0.1:8000/api';
 
@@ -198,6 +204,20 @@ api.interceptors.response.use(
       // Redirect to login with a message
       window.location.href = '/login?reason=device_switched';
       return Promise.reject(error);
+    }
+
+    // Signed-in user is not a member of this institute portal (e.g. a stale
+    // session from another account). Drop the session and send them to login.
+    const portalCode = error.response?.data?.code;
+    if (error.response?.status === 403 && portalCode === 'subdomain_access_denied' && localStorage.getItem('access_token')) {
+      const isAuthRequest = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/login/');
+      if (!isAuthRequest) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_data');
+        window.location.href = '/login?reason=wrong_portal';
+        return Promise.reject(error);
+      }
     }
 
     // If error status is 401 (Unauthorized) and it's not a login/refresh request
