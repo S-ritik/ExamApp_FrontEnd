@@ -21,6 +21,8 @@ import {
     User as UserIcon,
 } from "lucide-react";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { useBranding } from "../../hooks/useBranding";
+import BrandLogo from "../common/BrandLogo";
 import { api } from "../../hooks/useApi";
 
 interface SuperAdminLayoutProps {
@@ -51,21 +53,7 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
-    const [instituteBranding, setInstituteBranding] = useState<{ name: string; logo: string }>({
-        name: (user as any)?.institute?.name || (user as any)?.institute_name || "DashoExams",
-        logo: (user as any)?.institute?.logo || "/examlogo.png",
-    });
-
-    useEffect(() => {
-        const currentLogo = (user as any)?.institute?.logo;
-        const currentName = (user as any)?.institute?.name || (user as any)?.institute_name;
-        if (currentLogo || currentName) {
-            setInstituteBranding({
-                name: currentName || instituteBranding.name,
-                logo: currentLogo || instituteBranding.logo,
-            });
-        }
-    }, [user]);
+    const branding = useBranding();
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -209,31 +197,17 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                                 className="flex items-center gap-3 w-full hover:bg-slate-100 cursor-pointer transition-colors py-2 px-2 rounded-md -mx-2 group"
                             >
                                 <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center p-1 overflow-hidden flex-shrink-0">
-                                    <img
-                                        src={instituteBranding.logo}
-                                        alt={instituteBranding.name}
-                                        className="w-full h-full object-contain"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = "/examlogo.png";
-                                        }}
-                                    />
+                                    <BrandLogo className="w-full h-full object-contain" />
                                 </div>
                                 <div className="flex-1 overflow-hidden">
                                     <h1 className="font-bold text-md text-slate-900 leading-tight group-hover:text-violet-600 transition-colors truncate">
-                                        {instituteBranding.name}
+                                        {branding.name}
                                     </h1>
                                 </div>
                             </div>
                         ) : (
                             <div className="w-8 h-8 flex items-center justify-center mx-auto">
-                                <img
-                                    src={instituteBranding.logo}
-                                    alt="Logo"
-                                    className="w-full h-full object-contain"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = "/examlogo.png";
-                                    }}
-                                />
+                                <BrandLogo className="w-full h-full object-contain" />
                             </div>
                         )}
                     </div>

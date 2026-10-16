@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, getErrorMessage } from '../hooks/useApi';
+import { setCachedBranding } from '../utils/branding';
 
 // Device Manager for fingerprinting
 const deviceManager = {

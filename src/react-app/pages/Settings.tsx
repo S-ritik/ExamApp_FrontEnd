@@ -45,7 +45,6 @@ interface UserSettings {
   };
   institute: {
     name: string;
-    domain: string;
     address: string;
     phone: string;
     website: string;
@@ -89,7 +88,6 @@ export default function Settings() {
     },
     institute: {
       name: user?.institute_name || '',
-      domain: '',
       address: '',
       phone: '',
       website: ''
@@ -662,16 +660,6 @@ export default function Settings() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Domain</label>
-                    <input
-                      type="text"
-                      value={settings.institute.domain}
-                      onChange={(e) => handleInputChange('institute', 'domain', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                      placeholder="example.com"
-                    />
-                  </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">Phone</label>

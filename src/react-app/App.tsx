@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router";
 import { AuthProvider, useAuthContext } from "@/react-app/contexts/AuthContext";
+import { PortalProvider, usePortal } from "@/react-app/contexts/PortalContext";
 import { ThemeProvider } from "@/react-app/contexts/ThemeContext";
 import { OnboardingTourProvider } from "@/react-app/contexts/OnboardingTourContext";
 import Layout from "@/react-app/components/Layout";
@@ -340,6 +341,7 @@ function RegisterRoute() {
 // Also handles domain-based landing page selection
 function LandingRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, user } = useAuthContext();
+  const { subdomain } = usePortal();
 
   if (loading) {
     return (
@@ -360,6 +362,11 @@ function LandingRoute({ children }: { children: React.ReactNode }) {
   const hostname = window.location.hostname;
   if (hostname === 'timetable.dashoapp.com') {
     return <Timetablelanding />;
+  }
+
+  // Institute portals (kiit.exams.dashoapp.com) skip the DashoExams marketing page
+  if (subdomain) {
+    return <Navigate to="/login" replace />;
   }
 
   // Default: exams.dashoapp.com or any other domain shows the exam landing page
@@ -904,16 +911,18 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <TimetableCenterProvider>
-          <Router>
-            <OnboardingTourProvider>
-              <AppRoutes />
-            </OnboardingTourProvider>
-            <ToastContainer position="top-right" autoClose={3000} />
-          </Router>
-        </TimetableCenterProvider>
-      </AuthProvider>
+      <PortalProvider>
+        <AuthProvider>
+          <TimetableCenterProvider>
+            <Router>
+              <OnboardingTourProvider>
+                <AppRoutes />
+              </OnboardingTourProvider>
+              <ToastContainer position="top-right" autoClose={3000} />
+            </Router>
+          </TimetableCenterProvider>
+        </AuthProvider>
+      </PortalProvider>
     </ThemeProvider>
   );
 }
