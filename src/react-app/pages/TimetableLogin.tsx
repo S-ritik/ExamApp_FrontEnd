@@ -57,9 +57,6 @@ export default function TimetableLogin() {
       case 'platform_owner':
       case 'PLATFORM_OWNER':
         return '/platform-owner/dashboard';
-      case 'manager':
-      case 'MANAGER':
-        return '/manager';
       case 'super_admin':
       case 'SUPER_ADMIN':
         return '/superadmin/dashboard';

@@ -699,7 +699,6 @@ const UsersContent = () => {
       student: users.filter(u => u.role.toLowerCase() === 'student').length,
       teacher: users.filter(u => u.role.toLowerCase() === 'teacher').length,
       staff: users.filter(u => u.role.toLowerCase() === 'staff').length,
-      manager: users.filter(u => u.role.toLowerCase() === 'manager').length,
     };
   };
 
@@ -712,8 +711,6 @@ const UsersContent = () => {
         return 'bg-purple-50 text-purple-700 ring-purple-700/10';
       case 'admin':
         return 'bg-indigo-50 text-indigo-700 ring-indigo-700/10';
-      case 'manager':
-        return 'bg-blue-50 text-blue-700 ring-blue-700/10';
       case 'staff':
         return 'bg-gray-50 text-gray-600 ring-gray-500/10';
       case 'student':
@@ -743,8 +740,6 @@ const UsersContent = () => {
     switch (roleLower) {
       case 'super_admin':
         return 'bg-purple-100 text-purple-600';
-      case 'manager':
-        return 'bg-blue-100 text-blue-600';
       case 'staff':
         return 'bg-gray-100 text-gray-600';
       case 'student':
@@ -853,19 +848,6 @@ const UsersContent = () => {
                   <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${activeTab === "super_admin" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
                     }`}>
                     {roleCounts.super_admin || 0}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("manager")}
-                  className={`${activeTab === "manager"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                    } whitespace-nowrap border-b-2 pb-4 px-1 text-sm font-medium`}
-                >
-                  Managers
-                  <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${activeTab === "manager" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
-                    }`}>
-                    {roleCounts.manager || 0}
                   </span>
                 </button>
                 {!isPlatformOwner && (
@@ -1490,7 +1472,6 @@ const UsersContent = () => {
                       <option value="teacher">Teacher</option>
                       <option value="admin">Admin</option>
                       <option value="staff">Staff</option>
-                      <option value="manager">Manager</option>
                       <option value="super_admin">Super Admin</option>
                     </select>
                   </div>
@@ -1625,27 +1606,27 @@ const UsersContent = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Password {(newUser.role === 'manager' || newUser.role === 'super_admin') ? '*' : <span className="text-xs text-gray-500">(Optional - will be auto-generated)</span>}
+                      Password {newUser.role === 'super_admin' ? '*' : <span className="text-xs text-gray-500">(Optional - will be auto-generated)</span>}
                     </label>
                     <input
                       type="password"
                       value={newUser.password}
                       onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                      placeholder={(newUser.role === 'manager' || newUser.role === 'super_admin') ? "Enter password" : "Leave empty for auto-generation"}
+                      placeholder={newUser.role === 'super_admin' ? "Enter password" : "Leave empty for auto-generation"}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Confirm Password {(newUser.role === 'manager' || newUser.role === 'super_admin') ? '*' : <span className="text-xs text-gray-500">(If password provided)</span>}
+                      Confirm Password {newUser.role === 'super_admin' ? '*' : <span className="text-xs text-gray-500">(If password provided)</span>}
                     </label>
                     <input
                       type="password"
                       value={newUser.password_confirm}
                       onChange={(e) => setNewUser({ ...newUser, password_confirm: e.target.value })}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                      placeholder={(newUser.role === 'manager' || newUser.role === 'super_admin') ? "Confirm password" : "Confirm password if provided"}
+                      placeholder={newUser.role === 'super_admin' ? "Confirm password" : "Confirm password if provided"}
                     />
                   </div>
 
@@ -1666,7 +1647,6 @@ const UsersContent = () => {
                       <option value="teacher">Teacher</option>
                       <option value="admin">Admin</option>
                       <option value="staff">Staff</option>
-                      <option value="manager">Manager</option>
                       <option value="super_admin">Super Admin</option>
                     </select>
                   </div>
