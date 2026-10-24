@@ -10,7 +10,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { normalizeSubdomain, validateSubdomain, portalHost, portalUrl, ROOT_DOMAIN } from '../utils/subdomain';
 
 // Portal addresses are assigned by DiracAI staff only
-const PLATFORM_ROLES = ['platform_owner', 'manager'];
+const PLATFORM_ROLES = ['platform_owner'];
 
 interface Institute {
   id: number;

@@ -98,7 +98,6 @@ import {
 import Timetablelanding from "./pages/TimeTablelanding";
 import TimetableLogin from "./pages/TimetableLogin";
 import TimetableRegister from "./pages/TimetableRegister";
-import ManagerDashboard from "./pages/ManagerDashboard";
 import ExtractionV3Page from "@/react-app/pages/ExtractionV3";
 import ExtractionReviewPage from "@/react-app/pages/ExtractionV3/Review";
 import AnswerKeyUploadPage from "@/react-app/pages/AnswerKeyUpload";
@@ -239,8 +238,6 @@ function getDashboardRoute(user: any): string {
   switch (normalizedRole) {
     case 'platform_owner':
       return '/platform-owner/dashboard';
-    case 'manager':
-      return '/manager';
     case 'super_admin':
     case 'superadmin':
       return '/superadmin/dashboard';
@@ -520,14 +517,6 @@ function AppRoutes() {
         </FullscreenProtectedRoute>
       } />
       <Route path="/center-admin" element={<Navigate to="/center-admin/dashboard" replace />} />
-
-      {/* Manager Dashboard - Company level management */}
-      <Route path="/manager" element={
-        <FullscreenProtectedRoute>
-          <ManagerDashboard />
-        </FullscreenProtectedRoute>
-      } />
-      <Route path="/manager/dashboard" element={<Navigate to="/manager" replace />} />
 
       <Route path="/timetable" element={
         <ProtectedRoute>
